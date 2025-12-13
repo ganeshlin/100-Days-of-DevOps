@@ -1,0 +1,208 @@
+# 🔐 Task 3: Disable Direct SSH Root Login
+
+## 📘 Task Description
+
+As part of the **xFusionCorp Project Nautilus (KodeKloud Labs)**, the system administration team must enhance server security by **disabling direct SSH login for the root user** on all **Application Servers** in the **Stratos Datacenter**.
+
+Direct root login over SSH is a security risk and is considered a bad practice in production environments.
+
+---
+
+## 🎯 Objective
+
+* Disable SSH access for the `root` user
+* Apply the change on **all App Servers**
+* Ensure SSH service remains functional for normal users
+
+---
+
+## 🧩 Servers Involved
+
+* `stapp01`
+* `stapp02`
+* `stapp03`
+
+---
+
+## 🛠️ Steps Performed
+
+### 1️⃣ SSH into the App Server
+
+```bash
+ssh tony@stapp01
+```
+
+---
+
+### 2️⃣ Switch to Root User
+
+```bash
+sudo su -
+```
+
+---
+
+### 3️⃣ Edit SSH Server Configuration
+
+```bash
+vi /etc/ssh/sshd_config
+```
+
+Find the following line:
+
+```text
+#PermitRootLogin yes
+```
+
+Change it to:
+
+```text
+PermitRootLogin no
+```
+
+---
+
+### 4️⃣ Restart SSH Service
+
+```bash
+systemctl restart sshd
+```
+
+Verify status:
+
+```bash
+systemctl status sshd
+```
+
+---
+
+### 5️⃣ Validate Root Login is Disabled
+
+```bash
+ssh root@stapp01
+```
+
+✅ Expected Output:
+
+```text
+Permission denied, please try again.
+```
+
+---
+
+### 6️⃣ Repeat on All App Servers
+
+Repeat the same steps on:
+
+* `stapp02`
+* `stapp03`
+
+---
+
+## 🔍 Additional Verification (Optional)
+
+```bash
+sshd -T | grep permitrootlogin
+```
+
+Expected output:
+
+```text
+permitrootlogin no
+```
+
+---
+
+## 🧠 Why This Task Matters (Real-World Use)
+
+* Prevents brute-force attacks on the `root` account
+* Enforces **least privilege access**
+* Improves auditing and accountability
+* Required by security standards like **CIS Benchmarks**, **SOC2**, and **ISO 27001**
+
+---
+
+## ✅ Final Result
+
+✔ Direct SSH login for root user is disabled
+✔ SSH access works for non-root users
+✔ Configuration applied across all App Servers
+
+---
+
+## 📌 Learning Outcome
+
+* Difference between `ssh_config` (client) and `sshd_config` (server)
+* How SSH authentication is controlled on Linux servers
+* How to securely validate SSH hardening changes
+
+---
+
+## 🔍 Commands Used to Find & Verify Configuration (For Reference)
+
+### 🔹 Find a word or setting in a config file
+
+```bash
+grep PermitRootLogin /etc/ssh/sshd_config
+```
+
+Case-insensitive search:
+
+```bash
+grep -i permitrootlogin /etc/ssh/sshd_config
+```
+
+Show line number (useful for audits):
+
+```bash
+grep -in permitrootlogin /etc/ssh/sshd_config
+```
+
+---
+
+### 🔹 Search inside a file using `vi`
+
+```bash
+vi /etc/ssh/sshd_config
+```
+
+Inside `vi`, type:
+
+```text
+/PermitRootLogin
+```
+
+* Press `n` → next match
+* Press `N` → previous match
+
+---
+
+### 🔹 Check the active (runtime) SSH configuration
+
+```bash
+sshd -T | grep permitrootlogin
+```
+
+Expected output:
+
+```text
+permitrootlogin no
+```
+
+---
+
+### 🔹 Test root SSH login (validation)
+
+```bash
+ssh root@stapp01
+```
+
+Expected result:
+
+```text
+Permission denied, please try again.
+```
+
+---
+
+🧑‍💻 **Part of: 100 Days of DevOps / Linux Practice Series**
