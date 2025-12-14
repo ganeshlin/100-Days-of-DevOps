@@ -1,0 +1,102 @@
+# Day 4 – Linux File Permissions (Execute Script)
+
+## 📌 Task Overview
+
+In the xFusionCorp Industries Nautilus project, the sysadmin team deployed a backup automation script named **`xfusioncorp.sh`** across servers. On **App Server 2**, the script existed but had **no permissions at all**, making it unusable.
+
+My task was to:
+
+* Fix the file permissions
+* Ensure **all users** can execute the script
+
+---
+
+## 🖥️ Server Details
+
+* **Server Name:** App Server 2
+* **Hostname:** `stapp02`
+* **File Path:** `/tmp/xfusioncorp.sh`
+
+---
+
+## 🔍 Initial Issue
+
+When checking the file permissions:
+
+```bash
+ls -l /tmp/xfusioncorp.sh
+```
+
+Output:
+
+```
+---------- 1 root root 40 Dec 14 13:04 /tmp/xfusioncorp.sh
+```
+
+### ❌ Problem Identified
+
+* No read, write, or execute permissions
+* Even **root** could not execute the script
+* Automation and backups would fail
+
+---
+
+## 🛠️ Solution Applied
+
+To ensure the script is executable by **all users**, I ran:
+
+```bash
+chmod 755 /tmp/xfusioncorp.sh
+```
+
+### Why `755`?
+
+* **Owner (root):** read, write, execute
+* **Group:** read, execute
+* **Others:** read, execute
+
+This meets the task requirement and aligns with real-world production practices.
+
+---
+
+## ✅ Verification
+
+```bash
+ls -l /tmp/xfusioncorp.sh
+```
+
+Expected output:
+
+```
+-rwxr-xr-x 1 root root 40 Dec 14 13:04 /tmp/xfusioncorp.sh
+```
+
+(Optional test)
+
+```bash
+/tmp/xfusioncorp.sh
+```
+
+---
+
+## 🌍 Real-World Relevance
+
+This task reflects common DevOps scenarios:
+
+* Fixing broken cron jobs due to permission issues
+* Deploying automation and backup scripts
+* Troubleshooting CI/CD and server hardening problems
+
+Understanding Linux permissions is critical for **reliable automation and system stability**.
+
+---
+
+## 🏁 Conclusion
+
+✔️ Script permissions corrected
+✔️ All users can execute the script
+✔️ Backup automation restored
+
+---
+
+📅 **Linux / DevOps Practice – Day 4**
