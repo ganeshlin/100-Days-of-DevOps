@@ -1,0 +1,109 @@
+# Day 5 – SELinux Installation & Permanent Disable
+
+## 📌 Task Overview
+
+Following a security audit, the xFusionCorp Industries security team decided to introduce **SELinux** to improve application and server security. As part of initial testing, SELinux needed to be installed but **permanently disabled** on **App Server 3** until proper policies are configured.
+
+This task focuses on **preparing SELinux correctly without affecting runtime operations**.
+
+---
+
+## 🖥️ Server Details
+
+* **Server Name:** App Server 3
+* **Hostname:** `stapp03`
+* **OS Type:** RHEL/CentOS-based Linux
+
+---
+
+## 🎯 Task Requirements
+
+* Install required SELinux packages
+* Permanently disable SELinux
+* Do **NOT** reboot the server
+* Ignore current SELinux runtime status
+* Ensure SELinux is disabled **after the next reboot**
+
+---
+
+## 🛠️ Implementation Steps
+
+### 1️⃣ Login to App Server 3
+
+```bash
+ssh steve@stapp03
+```
+
+---
+
+### 2️⃣ Install SELinux Required Packages
+
+```bash
+yum install -y selinux-policy selinux-policy-targeted policycoreutils libselinux-utils
+```
+
+✔️ These packages are required for SELinux management and future policy configuration.
+
+---
+
+### 3️⃣ Permanently Disable SELinux
+
+Edit the SELinux configuration file:
+
+```bash
+vi /etc/selinux/config
+```
+
+Update the following line:
+
+```ini
+SELINUX=disabled
+```
+
+Save and exit the file.
+
+---
+
+### 4️⃣ Verify Configuration
+
+```bash
+grep SELINUX= /etc/selinux/config
+```
+
+Expected output:
+
+```ini
+SELINUX=disabled
+```
+
+---
+
+## ⚠️ Important Notes
+
+* `setenforce 0` was **not used** because it only changes runtime behavior
+* No reboot was performed as per task instructions
+* SELinux will be disabled **after the scheduled maintenance reboot**
+
+---
+
+## 🌍 Real-World DevOps Relevance
+
+This task reflects real production practices where:
+
+* Security tools are staged before enforcement
+* Configuration changes are applied ahead of maintenance windows
+* Runtime stability is preserved during audits
+
+Understanding SELinux modes (**enforcing, permissive, disabled**) is essential for secure Linux administration.
+
+---
+
+## 🏁 Conclusion
+
+✔️ SELinux packages installed successfully
+✔️ SELinux permanently disabled via configuration
+✔️ Server left running without reboot
+
+---
+
+📅 **Linux / DevOps Practice – Day 5**
