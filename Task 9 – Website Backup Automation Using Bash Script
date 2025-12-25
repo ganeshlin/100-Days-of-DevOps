@@ -1,0 +1,137 @@
+# DevOps Task 9 – Website Backup Automation Using Bash Script
+
+## Task Overview
+The production support team of xFusionCorp Industries needs a Bash script to automate website backups.
+
+A static website is running on App Server 1 in the Stratos Datacenter.  
+The script must create a backup archive of the website directory and copy it to the Nautilus Backup Server without asking for a password.
+
+---
+
+## Infrastructure Information
+
+App Server        : stapp01  
+Backup Server     : stbkp01  
+App Server User   : tony  
+Website Directory : /var/www/html/news  
+Local Backup Path : /backup  
+Script Path       : /scripts/news_backup.sh  
+Backup File Name  : xfusioncorp_news.zip  
+
+---
+
+## Requirements
+
+- Create a zip archive of `/var/www/html/news`
+- Store the archive in `/backup` on App Server 1
+- Copy the archive to `/backup` on Backup Server
+- Script must run without password prompt
+- Script must be executable by user `tony`
+- Do not use sudo inside the script
+- zip package must be installed manually
+
+---
+
+## Complete Execution Steps
+
+### Login to App Server 1
+
+```bash
+ssh tony@stapp01
+Install zip Package (Outside Script)
+sudo yum install zip -y
+
+
+The zip utility is required to compress website files and must not be installed inside the script.
+
+Verify installation:
+
+zip --version
+Create Required Directories
+mkdir -p /scripts
+mkdir -p /backup
+
+
+/scripts is used to store automation scripts
+
+/backup is used for temporary backup storage
+
+Set Ownership for Proper Permissions
+sudo chown -R tony:tony /scripts /backup
+
+
+This allows user tony to run the script and write backups without using sudo
+Configure Password-less SSH to Backup Server
+
+Generate SSH key (if not already created):
+
+ssh-keygen -t rsa -b 2048
+
+
+Copy SSH key to Backup Server:
+
+ssh-copy-id tony@stbkp01
+Validate password-less login:
+
+ssh tony@stbkp01
+
+
+Login should succeed without asking for a password.
+
+Create Backup Script
+vi /scripts/news_backup.sh
+
+
+Paste the following content:
+#!/bin/bash
+
+SOURCE_DIR="/var/www/html/news"
+BACKUP_DIR="/backup"
+BACKUP_FILE="xfusioncorp_news.zip"
+REMOTE_USER="tony"
+REMOTE_HOST="stbkp01"
+REMOTE_DIR="/backup"
+
+zip -r ${BACKUP_DIR}/${BACKUP_FILE} ${SOURCE_DIR}
+
+scp ${BACKUP_DIR}/${BACKUP_FILE} ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}
+
+Make Script Executable
+chmod +x /scripts/news_backup.sh
+
+Execute the Script
+/scripts/news_backup.sh
+
+Validation
+
+Check backup on App Server 1:
+
+ls -l /backup/xfusioncorp_news.zip
+
+
+Check backup on Backup Server:
+
+ssh tony@stbkp01
+ls -l /backup/xfusioncorp_news.zip
+Task Completion Summary
+
+Website directory archived successfully
+
+Backup stored locally on App Server 1
+
+Backup copied to Nautilus Backup Server
+
+Script executed without password prompt
+
+No sudo used inside script
+
+Script executable by user tony
+Real-World Use Case
+
+Automates static website backups
+
+Prevents data loss in production
+
+Uses secure SSH key-based authentication
+
+Foundation for cron-based scheduled backups
