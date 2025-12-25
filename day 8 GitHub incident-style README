@@ -1,0 +1,174 @@
+# MariaDB Incident Report – PID File Permission Issue
+
+## 📌 Incident Summary
+
+MariaDB service on **Nautilus DB Server (stdb01)** failed to start after a maintenance activity. Although the database engine initialized correctly, the service exited with an error due to a **PID file permission issue**.
+
+This document explains the **symptoms, root cause, troubleshooting steps, and permanent fix**, written in an **incident-style format** suitable for real-world production environments.
+
+---
+
+## 🖥️ Environment Details
+
+* **Project**: xFusionCorp Nautilus (KodeKloud-style labs)
+* **Datacenter**: Stratos DC
+* **Server**: stdb01 (Database Server)
+* **Service**: MariaDB 10.5
+* **OS**: RHEL/CentOS-based Linux
+
+---
+
+## ❗ Incident Symptoms
+
+### Service Status
+
+```bash
+sudo systemctl status mariadb
+```
+
+Result:
+
+```text
+Active: failed (Result: exit-code)
+```
+
+### Error Observed in Logs
+
+```text
+[ERROR] Can't start server: can't create PID file: Permission denied
+```
+
+MariaDB initialized InnoDB successfully but exited immediately after startup.
+
+---
+
+## 🔍 Initial Investigation
+
+### Checked MariaDB Logs
+
+```bash
+sudo cat /var/log/mariadb/mariadb.log
+```
+
+Key error identified:
+
+```text
+Can't create/write to file '/run/mariadb/mariadb.pid' (Errcode: 13 "Permission denied")
+```
+
+### Checked Runtime Directory Permissions
+
+```bash
+ls -ld /run/mariadb
+```
+
+Output:
+
+```text
+drwxr-xr-x 2 root mysql /run/mariadb
+```
+
+---
+
+## 🧠 Root Cause Analysis
+
+* MariaDB runs as user **`mysql`**
+* PID file location: `/run/mariadb/mariadb.pid`
+* Directory owner: **root**
+* Permissions: **755** (write access only for root)
+
+➡️ Result: MariaDB could not create its PID file and terminated, even though the database engine itself was healthy.
+
+---
+
+## 🛠️ Resolution (Fix Applied)
+
+### Corrected Ownership and Permissions
+
+```bash
+sudo chown mysql:mysql /run/mariadb
+sudo chmod 755 /run/mariadb
+```
+
+### Restarted Service
+
+```bash
+sudo systemctl start mariadb
+```
+
+---
+
+## ✅ Verification
+
+### Service Status
+
+```bash
+sudo systemctl status mariadb
+```
+
+Expected:
+
+```text
+Active: active (running)
+```
+
+### PID File Check
+
+```bash
+ls -l /run/mariadb
+```
+
+Expected:
+
+```text
+mariadb.pid
+```
+
+### Connectivity Test
+
+```bash
+mysql -u root
+```
+
+---
+
+## 🔒 Preventive Measure (Persistence Across Reboot)
+
+Since `/run` is a **tmpfs**, ensure the directory is recreated correctly at boot.
+
+### tmpfiles Configuration
+
+```bash
+sudo tee /etc/tmpfiles.d/mariadb.conf <<EOF
+d /run/mariadb 0755 mysql mysql -
+EOF
+
+sudo systemd-tmpfiles --create
+```
+
+---
+
+## 📚 Lessons Learned
+* MariaDB may fail **after successful initialization** if runtime directories are misconfigured
+* Always check **PID file and socket permissions**
+* Errors in systemd output may hide the real issue — MariaDB logs are critical
+* Runtime directories under `/run` must be recreated correctly after reboot
+
+---
+
+## 🏁 Final Outcome
+
+✔ MariaDB service restored successfully
+✔ No data loss occurred
+✔ Root cause clearly identified and documented
+✔ Preventive controls applied
+
+---
+
+### 📌 Keywords
+
+`MariaDB`, `PID file`, `Permission denied`, `Linux troubleshooting`, `Production incident`, `Nautilus Project`
+
+---
+
+🔗 *Part of the xFusionCorp Nautilus Linux & DevOps Incident Series*
