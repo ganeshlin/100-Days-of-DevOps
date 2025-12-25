@@ -1,0 +1,80 @@
+How Application Access Was Verified
+
+After deploying the Java application (ROOT.war) on Apache Tomcat running on App Server 2, multiple validation checks were performed to ensure the service is running correctly and accessible as expected.
+
+Service Status Verification
+sudo systemctl status tomcat
+
+Why:
+Confirms that the Tomcat service is:
+
+Active and running
+
+Managed by systemd
+
+Started without errors
+
+Relevant log confirmation:
+
+Starting ProtocolHandler ["http-nio-6100"]
+
+This proves Tomcat is listening on port 6100.
+
+✅ Port Binding Verification
+sudo ss -tulpn | grep java
+
+
+Why:
+
+Tomcat runs as a Java process
+
+This confirms the JVM is listening on the configured port
+LISTEN 0 100 :::6100 :::* users:(("java",pid=1660))
+
+Application Deployment Validation
+ls /usr/share/tomcat/webapps/
+
+
+Expected:
+
+ROOT  ROOT.war
+
+
+Why:
+
+ROOT.war ensures the application is deployed on the base URL (/)
+
+No additional context path is required
+
+Application Access Test (CLI)
+curl http://stapp02:6100
+
+
+Why:
+
+Simulates a browser request
+
+Confirms application response and HTTP connectivity
+Browser-Based Access (Lab Environment)
+
+Since stapp02 is an internal hostname, direct browser access from a local machine is not possible.
+
+To test via a browser:
+
+ssh -L 6100:stapp02:6100 jumphost
+
+
+Then open in a local browser:
+
+http://localhost:6100
+
+Key Learning
+
+A running service does not always imply a listening port
+
+Tomcat network bindings appear under the java process
+
+curl and SSH port forwarding are essential tools for validating internal services
+Result:
+The application is successfully deployed and accessible via
+http://stapp02:6100
