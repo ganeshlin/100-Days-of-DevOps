@@ -1,0 +1,131 @@
+📌 Task Overview
+
+The monitoring system reported that Apache was not reachable on port 5003 on one of the application servers (stapp01) in the Stratos Datacenter.
+
+The issue could be due to:
+
+Apache service being down
+
+Port not listening
+
+Firewall / iptables blocking traffic
+
+Network-level restrictions
+
+The goal was to identify the root cause and fix it without compromising existing security settings.
+🖥️ Environment
+
+Jump Host: jumphost
+
+App Server: stapp01
+
+Service: Apache (httpd)
+
+Port: 5003
+
+Firewall: iptables (firewalld not installed)
+🔍 Troubleshooting & Diagnosis
+1️⃣ Check Apache Service Status
+sudo systemctl status httpd
+
+
+Observation:
+
+Apache was installed
+
+Service initially failed due to port binding conflict
+
+After restart, Apache was running normally
+2️⃣ Verify Apache Is Listening on Port 5003
+sudo netstat -tulnp | grep 5003
+
+
+Expected Output:
+
+LISTEN ... httpd
+
+
+✔️ Confirms Apache is actively listening on port 5003
+3️⃣ Test Connectivity from Jump Host
+curl http://stapp01:5003
+
+
+Initial Error:
+
+No route to host
+
+
+✔️ Indicates a network or firewall-level block, not an Apache issue
+4️⃣ Check Firewall Service
+sudo systemctl status firewalld
+
+
+Output:
+
+Unit firewalld.service could not be found
+
+
+✔️ Confirms firewalld is not used
+✔️ System relies on iptables
+
+5️⃣ Inspect iptables Rules
+sudo iptables -L -n
+Key Finding:
+
+INPUT chain ended with:
+
+REJECT all -- reject-with icmp-host-prohibited
+
+
+Port 5003 was not explicitly allowed
+
+Resulted in “No route to host” from jump host
+
+🛠️ Solution (Correct & Secure Fix)
+✅ Allow Port 5003 via iptables
+
+Inserted an allow rule before the REJECT rule:
+
+sudo iptables -I INPUT 4 -p tcp --dport 5003 -m state --state NEW -j ACCEPT
+🔎 Verify Rule Order
+sudo iptables -L -n --line-numbers
+
+
+Expected:
+
+ACCEPT tcp dpt:5003
+REJECT all reject-with icmp-host-prohibited
+
+
+✔️ Port 5003 now allowed
+✔️ Firewall security preserved
+🔁 Restart Apache (Safe Step)
+sudo systemctl restart httpd
+
+✅ Final Validation
+From Jump Host
+curl http://stapp01:5003
+
+
+Result:
+
+HTML content returned (Apache default test page)
+
+Confirms Apache is reachable externally on port 5003
+🎯 Outcome
+
+✔️ Apache reachable on port 5003
+✔️ No security services disabled
+✔️ No firewall flushed
+✔️ No index.html modified
+✔️ Root cause properly identified and fixed
+
+🧠 Key Learning (Interview-Ready)
+
+“No route to host” → Firewall or network rejection (iptables REJECT)
+
+firewalld absence ≠ no firewall
+
+iptables rule order is critical
+
+Always prefer minimal, port-specific firewall changes
