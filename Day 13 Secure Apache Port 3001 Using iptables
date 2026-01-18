@@ -1,0 +1,175 @@
+# Linux Security Task – Secure Apache Port 3001 Using iptables (Nautilus Project)
+
+## 📌 Problem Statement
+
+One of the websites running on the **Nautilus infrastructure (Stratos DC)** uses Apache on **port 3001**.
+Currently, this port is open to all sources because no firewall is configured on the app hosts, which poses a security risk.
+
+To comply with security standards, access to this port must be **restricted**.
+
+---
+
+## 🎯 Requirements
+
+1. Install **iptables** and all required dependencies on **each App Server**
+2. Allow incoming traffic on **port 3001 only from the LBR (Load Balancer) host**
+3. Block access to **port 3001 for all other sources**
+4. Ensure firewall rules **persist after system reboot**
+
+---
+
+## 🧠 Design & Approach
+
+* Use **iptables** for host-based firewalling
+* Implement an **allow-first, deny-later** rule strategy
+* Persist rules using **iptables-services**
+
+---
+
+## 🖥️ Environment Details
+
+* **App Servers:** `stapp01`, `stapp02`, `stapp03`
+* **Apache Port:** `3001`
+* **LBR Host IP:** `172.16.238.14`
+
+  > ⚠️ Replace with the actual LBR IP if different in your lab
+
+---
+
+## 🛠️ Implementation Steps
+
+> Perform the following steps on **each App Server**
+
+### 1️⃣ Login to App Server and switch to root
+
+```bash
+ssh tony@stapp01
+sudo su -
+```
+
+---
+
+### 2️⃣ Install iptables and required services
+
+```bash
+yum install -y iptables iptables-services
+```
+
+Enable and start the service:
+
+```bash
+systemctl enable iptables
+systemctl start iptables
+```
+
+---
+
+### 3️⃣ Flush Existing Rules (Clean Baseline)
+
+```bash
+iptables -F
+```
+
+---
+
+### 4️⃣ Allow Port 3001 Access from LBR Host
+
+```bash
+iptables -A INPUT -p tcp -s 172.16.238.14 --dport 3001 -j ACCEPT
+```
+
+---
+
+### 5️⃣ Block Port 3001 for All Other Sources
+
+```bash
+iptables -A INPUT -p tcp --dport 3001 -j DROP
+```
+
+---
+
+### 6️⃣ Allow Established and Loopback Traffic (Best Practice)
+
+```bash
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -i lo -j ACCEPT
+```
+
+---
+
+### 7️⃣ Save Rules for Persistence
+
+```bash
+service iptables save
+```
+
+Verify rules:
+
+```bash
+iptables -L -n
+```
+
+---
+
+## 🧪 Validation
+
+### ✅ From LBR Host (Allowed)
+
+```bash
+curl http://stapp01:3001
+```
+
+**Expected Result:** Apache page or valid response
+
+---
+
+### ❌ From Any Other Host (Blocked)
+
+```bash
+curl http://stapp01:3001
+```
+
+**Expected Result:**
+Connection timeout or *No route to host*
+
+---
+
+### 🔁 Reboot Verification (Optional)
+
+```bash
+reboot
+```
+
+After reboot:
+
+```bash
+iptables -L -n
+```
+
+✔️ Rules remain intact
+
+---
+
+## ✅ Final Outcome
+
+* ✔️ iptables installed on all app servers
+* ✔️ Apache port **3001** accessible only from LBR
+* ❌ All other incoming traffic blocked
+* ✔️ Firewall rules persist after reboot
+* ✔️ Security compliance achieved
+
+---
+
+## 📘 Key Takeaways
+
+* Host-based firewalls add a critical security layer even inside private networks
+* Always allow trusted sources **before** adding deny rules
+* Persisting firewall rules is essential for production systems
+
+---
+
+## 🔗 Project Context
+
+This task is part of the **xFusionCorp Nautilus Project**, a hands-on Linux and DevOps practice environment that simulates real-world enterprise infrastructure security scenarios.
+
+---
